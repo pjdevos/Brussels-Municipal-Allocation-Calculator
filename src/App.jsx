@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
 import { ControlPanel } from './components/controls/ControlPanel';
-import { SummaryStats } from './components/results/SummaryStats';
+import { SummaryCards } from './components/results/SummaryCards';
+import { MunicipalityImpact } from './components/results/MunicipalityImpact';
 import { AllocationTable } from './components/results/AllocationTable';
+import { AllocationBreakdown } from './components/results/AllocationBreakdown';
 import { useScenario } from './hooks/useScenario';
 
 function App() {
@@ -68,6 +70,9 @@ function App() {
 
   return (
     <AppLayout>
+      {/* Summary Cards - Full Width */}
+      <SummaryCards scenarioResults={scenarioResults} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Control Panel - Left Side */}
         <div className="lg:col-span-1">
@@ -84,14 +89,22 @@ function App() {
 
         {/* Results - Right Side */}
         <div className="lg:col-span-2">
-          <SummaryStats
+          {/* Municipality Impact Section */}
+          <MunicipalityImpact
             baselineResults={baselineResults}
             scenarioResults={scenarioResults}
             selectedMunicipality={selectedMunicipality}
           />
 
+          {/* Allocation Table */}
           <AllocationTable
             baselineResults={baselineResults}
+            scenarioResults={scenarioResults}
+            selectedMunicipality={selectedMunicipality}
+          />
+
+          {/* Allocation Breakdown */}
+          <AllocationBreakdown
             scenarioResults={scenarioResults}
             selectedMunicipality={selectedMunicipality}
           />

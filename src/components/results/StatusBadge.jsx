@@ -1,8 +1,8 @@
 export function StatusBadge({ status }) {
   const styles = {
     normal: 'bg-green-100 text-green-800',
-    standstill: 'bg-yellow-100 text-yellow-800',
-    capped: 'bg-blue-100 text-blue-800',
+    standstill: 'bg-gray-100 text-gray-800',
+    capped: 'bg-orange-100 text-orange-800',
   };
 
   const labels = {

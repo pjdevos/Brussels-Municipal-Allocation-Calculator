@@ -1,6 +1,18 @@
 import { useState } from 'react';
-import { formatEuro, formatPercentChange } from '../../utils/formatters';
+import { formatEuro } from '../../utils/formatters';
 import { StatusBadge } from './StatusBadge';
+
+function formatDelta(value) {
+  if (value === 0) return '—';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${formatEuro(value)}`;
+}
+
+function formatDeltaPercent(value) {
+  if (value === 0) return '';
+  const sign = value > 0 ? '+' : '';
+  return `(${sign}${value.toFixed(2)}%)`;
+}
 
 export function AllocationTable({ baselineResults, scenarioResults, selectedMunicipality }) {
   const [sortField, setSortField] = useState('name');
@@ -11,16 +23,25 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
   // Combine baseline and scenario results
   const combinedResults = scenarioResults.map(scenario => {
     const baseline = baselineResults.find(b => b.id === scenario.id);
+
     const calcChange = scenario.calculated - baseline.calculated;
     const calcChangePercent = baseline.calculated !== 0
       ? (calcChange / baseline.calculated) * 100
       : 0;
 
+    const paidChange = scenario.paid - baseline.paid;
+    const paidChangePercent = baseline.paid !== 0
+      ? (paidChange / baseline.paid) * 100
+      : 0;
+
     return {
       ...scenario,
       baselineCalculated: baseline.calculated,
+      baselinePaid: baseline.paid,
       calcChange,
       calcChangePercent,
+      paidChange,
+      paidChangePercent,
       isSelected: scenario.id === selectedMunicipality,
     };
   });
@@ -33,9 +54,6 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
       case 'name':
         comparison = a.name.localeCompare(b.name);
         break;
-      case 'baselineCalculated':
-        comparison = a.baselineCalculated - b.baselineCalculated;
-        break;
       case 'calculated':
         comparison = a.calculated - b.calculated;
         break;
@@ -44,6 +62,9 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
         break;
       case 'paid':
         comparison = a.paid - b.paid;
+        break;
+      case 'paidChange':
+        comparison = a.paidChange - b.paidChange;
         break;
       default:
         comparison = 0;
@@ -61,10 +82,10 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
     }
   };
 
-  const SortHeader = ({ field, children }) => (
+  const SortHeader = ({ field, children, className = '' }) => (
     <th
       onClick={() => handleSort(field)}
-      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+      className={`px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${className}`}
     >
       <div className="flex items-center gap-1">
         {children}
@@ -90,13 +111,27 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <SortHeader field="name">Municipality</SortHeader>
-              <SortHeader field="baselineCalculated">Baseline Calc.</SortHeader>
-              <SortHeader field="calculated">Scenario Calc.</SortHeader>
-              <SortHeader field="calcChange">Change</SortHeader>
-              <SortHeader field="paid">Paid</SortHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+              <SortHeader field="name">
+                <span>Municipality</span>
+                <span className="block text-[10px] font-normal normal-case">Commune / Gemeente</span>
+              </SortHeader>
+              <SortHeader field="calculated">
+                <span>Calculated</span>
+                <span className="block text-[10px] font-normal normal-case">Calculé / Berekend</span>
+              </SortHeader>
+              <SortHeader field="calcChange">
+                <span>Δ Calculated</span>
+              </SortHeader>
+              <SortHeader field="paid">
+                <span>Paid</span>
+                <span className="block text-[10px] font-normal normal-case">Versé / Betaald</span>
+              </SortHeader>
+              <SortHeader field="paidChange">
+                <span>Δ Paid</span>
+              </SortHeader>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span>Mechanism</span>
+                <span className="block text-[10px] font-normal normal-case">Mécanisme</span>
               </th>
             </tr>
           </thead>
@@ -106,36 +141,26 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
                 key={result.id}
                 className={`${result.isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
               >
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <div className="flex items-center">
                     {result.isSelected && (
-                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 flex-shrink-0" />
                     )}
                     <span className={`text-sm ${result.isSelected ? 'font-semibold text-blue-900' : 'text-gray-900'}`}>
                       {result.name}
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                  {formatEuro(result.baselineCalculated)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
+                <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">
                   {formatEuro(result.calculated)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <span className={`text-sm font-medium ${
-                    result.calcChange > 0
-                      ? 'text-green-600'
-                      : result.calcChange < 0
-                        ? 'text-red-600'
-                        : 'text-gray-500'
-                  }`}>
+                <td className="px-3 py-3 whitespace-nowrap">
+                  <span className="text-sm text-gray-600">
                     {result.calcChange !== 0 ? (
                       <>
-                        {formatEuro(result.calcChange)}
-                        <br />
-                        <span className="text-xs">
-                          ({formatPercentChange(result.calcChangePercent)})
+                        {formatDelta(result.calcChange)}
+                        <span className="text-xs ml-1 text-gray-500">
+                          {formatDeltaPercent(result.calcChangePercent)}
                         </span>
                       </>
                     ) : (
@@ -143,10 +168,28 @@ export function AllocationTable({ baselineResults, scenarioResults, selectedMuni
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
                   {formatEuro(result.paid)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">
+                <td className="px-3 py-3 whitespace-nowrap">
+                  <span className={`text-sm font-medium ${
+                    result.status === 'normal' && result.paidChange !== 0
+                      ? 'text-green-600'
+                      : 'text-gray-600'
+                  }`}>
+                    {result.paidChange !== 0 ? (
+                      <>
+                        {formatDelta(result.paidChange)}
+                        <span className="text-xs ml-1 opacity-75">
+                          {formatDeltaPercent(result.paidChangePercent)}
+                        </span>
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </span>
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap">
                   <StatusBadge status={result.status} />
                 </td>
               </tr>
