@@ -1,24 +1,21 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
-import { ControlPanel } from './components/controls/ControlPanel';
-import { SummaryCards } from './components/results/SummaryCards';
-import { MunicipalityImpact } from './components/results/MunicipalityImpact';
-import { AllocationTable } from './components/results/AllocationTable';
-import { AllocationBreakdown } from './components/results/AllocationBreakdown';
+import { Dashboard } from './pages/Dashboard';
+import { AllMunicipalities } from './pages/AllMunicipalities';
+import { About } from './pages/About';
+import { LanguageProvider } from './i18n/LanguageContext';
 import { useScenario } from './hooks/useScenario';
 
-function App() {
+function AppContent() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load municipality data
   useEffect(() => {
     fetch('/data/municipalities.json')
       .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to load municipality data');
-        }
+        if (!response.ok) throw new Error('Failed to load municipality data');
         return response.json();
       })
       .then(json => {
@@ -31,11 +28,9 @@ function App() {
       });
   }, []);
 
-  // Use scenario hook for state management and calculations
   const {
     selectedMunicipality,
     tweaks,
-    municipalities,
     baselineResults,
     scenarioResults,
     selectedBaseline,
@@ -50,7 +45,7 @@ function App() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading municipality data...</p>
+            <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
       </AppLayout>
@@ -61,7 +56,7 @@ function App() {
     return (
       <AppLayout>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <h2 className="text-lg font-semibold text-red-800">Error Loading Data</h2>
+          <h2 className="text-lg font-semibold text-red-800">Error</h2>
           <p className="text-red-600 mt-2">{error}</p>
         </div>
       </AppLayout>
@@ -70,47 +65,46 @@ function App() {
 
   return (
     <AppLayout>
-      {/* Summary Cards - Full Width */}
-      <SummaryCards scenarioResults={scenarioResults} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Control Panel - Left Side */}
-        <div className="lg:col-span-1">
-          <ControlPanel
-            municipalities={data?.municipalities || []}
-            selectedMunicipality={selectedMunicipality}
-            selectedBaseline={selectedBaseline}
-            tweaks={tweaks}
-            onSelectMunicipality={selectMunicipality}
-            onUpdateTweak={updateTweak}
-            onResetTweaks={resetTweaks}
-          />
-        </div>
-
-        {/* Results - Right Side */}
-        <div className="lg:col-span-2">
-          {/* Municipality Impact Section */}
-          <MunicipalityImpact
-            baselineResults={baselineResults}
-            scenarioResults={scenarioResults}
-            selectedMunicipality={selectedMunicipality}
-          />
-
-          {/* Allocation Table */}
-          <AllocationTable
-            baselineResults={baselineResults}
-            scenarioResults={scenarioResults}
-            selectedMunicipality={selectedMunicipality}
-          />
-
-          {/* Allocation Breakdown */}
-          <AllocationBreakdown
-            scenarioResults={scenarioResults}
-            selectedMunicipality={selectedMunicipality}
-          />
-        </div>
-      </div>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Dashboard
+              data={data}
+              selectedMunicipality={selectedMunicipality}
+              selectedBaseline={selectedBaseline}
+              tweaks={tweaks}
+              baselineResults={baselineResults}
+              scenarioResults={scenarioResults}
+              selectMunicipality={selectMunicipality}
+              updateTweak={updateTweak}
+              resetTweaks={resetTweaks}
+            />
+          }
+        />
+        <Route
+          path="/municipalities"
+          element={
+            <AllMunicipalities
+              baselineResults={baselineResults}
+              scenarioResults={scenarioResults}
+              selectedMunicipality={selectedMunicipality}
+            />
+          }
+        />
+        <Route path="/about" element={<About />} />
+      </Routes>
     </AppLayout>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </BrowserRouter>
   );
 }
 

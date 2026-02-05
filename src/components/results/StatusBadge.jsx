@@ -1,4 +1,8 @@
+import { useLanguage } from '../../i18n/LanguageContext';
+
 export function StatusBadge({ status }) {
+  const { t } = useLanguage();
+
   const styles = {
     normal: 'bg-green-100 text-green-800',
     standstill: 'bg-gray-100 text-gray-800',
@@ -6,9 +10,9 @@ export function StatusBadge({ status }) {
   };
 
   const labels = {
-    normal: 'Normal',
-    standstill: 'Standstill',
-    capped: 'Capped +4%',
+    normal: t('mechanism_normal'),
+    standstill: t('mechanism_standstill'),
+    capped: t('mechanism_capped'),
   };
 
   return (
